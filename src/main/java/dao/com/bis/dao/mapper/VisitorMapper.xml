@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bis.dao.VisitorDao">
+	<insert id="saveData">
+		REPLACE INTO
+		bi_visitor(
+		imsi,
+		age,
+		gender,
+		city,
+		workAddress,
+		homeAddress,
+		time
+		)
+		VALUES
+		<foreach collection="list" item="item" index="index"
+			separator=",">
+			(
+			#{item.imsi},
+			#{item.age},
+			#{item.gender},
+			#{item.city},
+			#{item.workAddress},
+			#{item.homeAddress},
+			#{item.time}
+			)
+		</foreach>
+	</insert>
+
+	<insert id="saveData1">
+		REPLACE INTO
+		bi_ip_imsi(
+		userId,
+		imsi,
+		eNBid,
+		cellId
+		)
+		VALUES
+		<foreach collection="list" item="item" index="index"
+			separator=",">
+			(
+			#{item.userId},
+			#{item.imsi},
+			#{item.eNBid},
+			#{item.cellId}
+			)
+		</foreach>
+	</insert>
+
+	<select id="getData" resultType="Map">
+		select ${columnName}
+		name,count(id) value from bi_visitor
+		<if test="endTime != null">
+			where DATE_FORMAT(time,'%Y-%m-%d') &gt;= #{startTime} and
+			DATE_FORMAT(time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+		group by ${columnName} order by
+		count(id) desc limit 10
+	</select>
+
+	<select id="getAge" resultType="Map">
+		select age name,count(age) value
+		from ( select case
+		when age &lt;=
+		#{baseNum} then '00后'
+		when age &gt;
+		(#{baseNum}) and age &lt;=
+		(#{baseNum}+10) then '90后'
+		when age &gt;
+		(#{baseNum}+10) and age &lt;=
+		(#{baseNum}+20) then '80后'
+		when age &gt;
+		(#{baseNum}+20) and age &lt;=
+		(#{baseNum}+30) then '70后'
+		when age &gt;
+		(#{baseNum}+30) then '69前'
+		end
+		as age from bi_visitor
+		<if test="endTime != null">
+			where DATE_FORMAT(time,'%Y-%m-%d') &gt;= #{startTime} and
+			DATE_FORMAT(time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+		) a group by age
+		desc limit 10
+	</select>
+
+
+	<select id="getDataByShopId" resultType="Map">
+		select ${columnName} name,count(${columnName}) value from
+		(select
+		f.time,g.imsi from (select time,userId from
+		${tableName} where
+		shopId=#{shopId} ) f join bi_ip_imsi g on
+		g.userId=f.userId) h
+		join
+		(select ${columnName},time,imsi from
+		bi_visitor
+		<if test="endTime != null">
+			where DATE_FORMAT(time,'%Y-%m-%d') &gt;= #{startTime} and
+			DATE_FORMAT(time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+		) i on h.time=DATE_FORMAT(i.time,'%Y-%m-%d') and h.imsi=i.imsi group
+		by
+		${columnName}
+	</select>
+
+
+	<select id="getAgeByShopId" resultType="Map">
+		select age name,count(age) value
+		from ( select case
+		when age &lt;=
+		#{baseNum} then '00后'
+		when age &gt;
+		(#{baseNum}) and age &lt;=
+		(#{baseNum}+10) then '90后'
+		when age &gt;
+		(#{baseNum}+10) and age &lt;=
+		(#{baseNum}+20) then '80后'
+		when age &gt;
+		(#{baseNum}+20) and age &lt;=
+		(#{baseNum}+30) then '70后'
+		when age &gt;
+		(#{baseNum}+30) then '69前'
+		end
+		as
+		age from (select age from (select
+		f.time,g.imsi from (select
+		time,userId from
+		${tableName} where shopId=#{shopId} ) f join bi_ip_imsi g on
+		g.userId=f.userId) z
+		join
+		(select age,time,imsi from bi_visitor
+		<if test="endTime != null">
+			where DATE_FORMAT(time,'%Y-%m-%d') &gt;= #{startTime} and
+			DATE_FORMAT(time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+		) y on z.time
+		=DATE_FORMAT(y.time,'%Y-%m-%d') and z.imsi=y.imsi
+		) f ) g
+		group by
+		age
+		desc
+	</select>
+
+	<select id="getDataByCategoryId" resultType="Map">
+		select ${columnName} name,count(${columnName}) value from
+		(select
+		f.time,g.imsi from (select e.time,e.userId from (select c.id
+		shopId
+		from (select id from bi_shop_category where id=#{categoryId}) a join
+		bi_maps b
+		join
+		bi_shop c on a.id=c.categoryId and c.mapId=b.mapId where
+		b.storeId=#{storeId}) d
+		join
+		${tableName} e on e.shopId=d.shopId ) f
+		join bi_ip_imsi g on
+		g.userId=f.userId) h join (select
+		${columnName},time,imsi from
+		bi_visitor
+		<if test="endTime != null">
+			where DATE_FORMAT(time,'%Y-%m-%d') &gt;= #{startTime} and
+			DATE_FORMAT(time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+		) i on h.time=DATE_FORMAT(i.time,'%Y-%m-%d') and h.imsi=i.imsi group
+		by
+		${columnName}
+	</select>
+
+
+	<select id="getAgeByCategoryId" resultType="Map">
+		select age name,count(age) value
+		from ( select case
+		when age &lt;=
+		#{baseNum} then '00后'
+		when age &gt;
+		(#{baseNum}) and age &lt;=
+		(#{baseNum}+10) then '90后'
+		when age &gt;
+		(#{baseNum}+10) and age &lt;=
+		(#{baseNum}+20) then '80后'
+		when age &gt;
+		(#{baseNum}+20) and age &lt;=
+		(#{baseNum}+30) then '70后'
+		when age &gt;
+		(#{baseNum}+30) then '69前'
+		end
+		as
+		age from (select age from (select
+		f.time,g.imsi from (select
+		e.time,e.userId from (select c.id
+		shopId
+		from (select id from
+		bi_shop_category where id=#{categoryId}) a join
+		bi_maps b
+		join
+		bi_shop c
+		on a.id=c.categoryId and c.mapId=b.mapId where
+		b.storeId=#{storeId}) d
+		join
+		${tableName} e on
+		e.shopId=d.shopId ) f join bi_ip_imsi g on
+		g.userId=f.userId) z join
+		(select age,time,imsi from bi_visitor
+		<if test="endTime != null">
+			where DATE_FORMAT(time,'%Y-%m-%d') &gt;= #{startTime} and
+			DATE_FORMAT(time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+		) y on z.time
+		=DATE_FORMAT(y.time,'%Y-%m-%d') and z.imsi=y.imsi
+		) f ) g
+		group by
+		age
+		desc
+	</select>
+
+	<select id="getDataByStoreId" resultType="Map">
+		select ${columnName} name,count(${columnName}) value from
+		(select
+		f.time,g.imsi from (select e.time,e.userId from (select c.id
+		shopId
+		from bi_maps b
+		join
+		bi_shop c on c.mapId=b.mapId where
+		b.storeId=#{storeId}) d
+		join
+		${tableName} e on e.shopId=d.shopId ) f
+		join bi_ip_imsi g on
+		g.userId=f.userId) h join (select
+		${columnName},time,imsi from
+		bi_visitor
+		<if test="endTime != null">
+			where DATE_FORMAT(time,'%Y-%m-%d') &gt;= #{startTime} and
+			DATE_FORMAT(time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+		) i on h.time=DATE_FORMAT(i.time,'%Y-%m-%d') and h.imsi=i.imsi group
+		by
+		${columnName}
+	</select>
+
+
+	<select id="getAgeByStoreId" resultType="Map">
+		select age name,count(age) value
+		from ( select case
+		when age &lt;=
+		#{baseNum} then '00后'
+		when age &gt;
+		(#{baseNum}) and age &lt;=
+		(#{baseNum}+10) then '90后'
+		when age &gt;
+		(#{baseNum}+10) and age &lt;=
+		(#{baseNum}+20) then '80后'
+		when age &gt;
+		(#{baseNum}+20) and age &lt;=
+		(#{baseNum}+30) then '70后'
+		when age &gt;
+		(#{baseNum}+30) then '69前'
+		end
+		as
+		age from (select age from (select f.time,g.imsi from (select
+		e.time,e.userId from (select c.id shopId
+		from bi_maps b
+		join
+		bi_shop c on
+		c.mapId=b.mapId where b.storeId=#{storeId}) d
+		join
+		${tableName} e on
+		e.shopId=d.shopId ) f join bi_ip_imsi g on
+		g.userId=f.userId) z join
+		(select age,time,imsi from bi_visitor
+		<if test="endTime != null">
+			where DATE_FORMAT(time,'%Y-%m-%d') &gt;= #{startTime} and
+			DATE_FORMAT(time,'%Y-%m-%d') &lt;= #{endTime}
+		</if>
+		) y on z.time
+		=DATE_FORMAT(y.time,'%Y-%m-%d') and z.imsi=y.imsi
+		) f ) g
+		group by
+		age
+		desc
+	</select>
+
+	<select id="getMapVisitorCount" resultType="Map">
+		select b.floor
+		name,count(distinct a.userId) value from ${tableName} a join bi_maps b
+		on
+		a.mapId=b.mapId where b.storeId=#{storeId} group by name order by
+		value desc
+	</select>
+
+	<select id="getShopVisitorCount" resultType="Map">
+		select b.shopName
+		name,count(distinct a.userId) value from ${tableName} a join bi_shop b
+		join
+		bi_maps c on (a.x between least(b.xSpot*10,b.x1Spot*10) and
+		greatest(b.xSpot*10,b.x1Spot*10))
+		and (a.y between
+		least(b.ySpot*10,b.y1Spot*10) and
+		greatest(b.ySpot*10,b.y1Spot*10)) and
+		a.mapId=b.mapId and
+		b.mapId=c.mapId where c.storeId=#{storeId} group by
+		name order by value desc
+	</select>
+
+</mapper>

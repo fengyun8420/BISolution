@@ -1,0 +1,5 @@
+|user1|aa|enbid|xiaoquid
+|user2|bb|enbid|xiaoquid
+|user3|cc|enbid|xiaoquid
+|user4|dd|enbid|xiaoquid
+|user5|ee|enbid|xiaoquid
